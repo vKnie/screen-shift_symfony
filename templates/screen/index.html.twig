@@ -1,0 +1,38 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+
+    <h1>Liste des screens</h1>
+    <hr>
+
+    <a href="{{ path('create_screen') }}" class="btn btn-success mb-3">Créer un screen</a>
+
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>Nom</th>
+                <th>Groupe</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for screen in screens %}
+                <tr>
+                    <td>{{ screen.name }}</td>
+                    <td>{{ screen.groupeScreen.name }}</td>
+                    <td>
+                        <a href="{{ path('edit_screen', {id: screen.id}) }}" class="btn btn-primary btn-sm">Modifier</a>
+
+                        <form method="post" action="{{ path('delete_screen', {id: screen.id}) }}" style="display:inline-block;">
+                            <button class="btn btn-sm btn-danger">Supprimer</button>
+                        </form>
+                    </td>
+                </tr>
+            {% else %}
+                <tr>
+                    <td colspan="4">Aucun screen trouvé.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

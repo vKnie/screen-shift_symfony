@@ -1,0 +1,46 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+    <h1>Liste des images</h1>
+    <hr>
+
+    <a href="{{ path('create_picture') }}" class="btn btn-success mb-3">Ajouter une image</a>
+
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>Délai</th>
+                <th>Début</th>
+                <th>Fin</th>
+                <th>Image</th>
+                <th>Screen</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for picture in pictures %}
+                <tr>
+                    <td>{{ picture.delay }}</td>
+                    <td>{{ picture.startDate ? picture.startDate|date('Y-m-d') : '' }}</td>
+                    <td>{{ picture.endDate ? picture.endDate|date('Y-m-d') : '' }}</td>
+                    <td>
+                        {% if picture.imageName %}
+                            <img src="{{ asset('uploads/pictures/' ~ picture.imageName) }}" style="max-height: 60px;">
+                        {% endif %}
+                    </td>
+                    <td>{{ picture.screenPicture.name ?? 'N/A' }}</td>
+                    <td>
+                        <a href="{{ path('edit_picture', {id: picture.id}) }}" class="btn btn-primary btn-sm">Modifier</a>
+                        <form method="post" action="{{ path('delete_picture', {id: picture.id}) }}" style="display:inline-block;">
+                            <button class="btn btn-sm btn-danger">Supprimer</button>
+                        </form>
+                    </td>
+                </tr>
+            {% else %}
+                <tr>
+                    <td colspan="8">Aucune image trouvée.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

@@ -1,17 +1,52 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <meta charset="UTF-8">
-        <title>{% block title %}Welcome!{% endblock %}</title>
-        <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><text y=%221.2em%22 font-size=%2296%22>⚫️</text><text y=%221.3em%22 x=%220.2em%22 font-size=%2276%22 fill=%22%23fff%22>sf</text></svg>">
-        {% block stylesheets %}
-        {% endblock %}
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Welcome!{% endblock %}</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><text y=%221.2em%22 font-size=%2296%22>⚫️</text><text y=%221.3em%22 x=%220.2em%22 font-size=%2276%22 fill=%22%23fff%22>sf</text></svg>">
 
-        {% block javascripts %}
-            {% block importmap %}{{ importmap('app') }}{% endblock %}
-        {% endblock %}
-    </head>
-    <body>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/js/bootstrap.bundle.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+
+    {% block stylesheets %}{% endblock %}
+    {% block javascripts %}
+        {% block importmap %}{{ importmap('app') }}{% endblock %}
+    {% endblock %}
+</head>
+<body>
+<div class="d-flex">
+    <div class="d-flex flex-column flex-shrink-0 p-3 text-white bg-dark" style="width: 280px; height: 100vh;">
+        <a href="{{ path('app_home') }}" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-white text-decoration-none">
+            <span class="fs-4">Screen Shift</span>
+        </a>
+        <hr>
+        <ul class="nav nav-pills flex-column mb-auto">
+            <li class="nav-item">
+                <a href="{{ path('app_home') }}" class="nav-link {% if app.request.attributes.get('_route') == 'app_home' %}active{% else %}text-light{% endif %}">
+                    <i class="bi bi-house me-2"></i>Home
+                </a>
+                <a href="{{ path('app_group') }}" class="nav-link {% if app.request.attributes.get('_route') == 'app_group' %}active{% else %}text-light{% endif %}">
+                    <i class="bi bi-collection me-2"></i>Group
+                </a>
+                <a href="{{ path('app_screen') }}" class="nav-link {% if app.request.attributes.get('_route') == 'app_screen' %}active{% else %}text-light{% endif %}">
+                    <i class="bi bi-arrows-fullscreen me-2"></i>Screen
+                </a>
+                <a href="{{ path('app_picture') }}" class="nav-link {% if app.request.attributes.get('_route') == 'app_picture' %}active{% else %}text-light{% endif %}">
+                    <i class="bi bi-images me-2"></i>Picture
+                </a>
+                <a href="{{ path('app_configuration') }}" class="nav-link {% if app.request.attributes.get('_route') == 'app_configuration' %}active{% else %}text-light{% endif %}">
+                    <i class="bi bi-sliders me-2"></i>Configuration
+                </a>
+                <a href="{{ path('app_convert') }}" class="nav-link {% if app.request.attributes.get('_route') == 'app_convert' %}active{% else %}text-light{% endif %}">
+                    <i class="bi bi-arrow-left-right me-2"></i>Convert to
+                </a>
+            </li>
+        </ul>
+    </div>
+    <div class="flex-grow-1 p-4">
         {% block body %}{% endblock %}
-    </body>
+    </div>
+</div>
+</body>
 </html>
