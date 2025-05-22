@@ -1,6 +1,7 @@
 {% extends 'base.html.twig' %}
 
 {% block body %}
+
     <h1>{{ edit is defined ? 'Modifier une image' : 'Créer une image' }}</h1>
     <hr>
 
@@ -46,4 +47,5 @@
             {{ edit is defined ? 'Mettre à jour' : 'Créer' }}
         </button>
     {{ form_end(form) }}
+    
 {% endblock %}
