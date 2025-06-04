@@ -1,0 +1,25 @@
+{% extends 'base.html.twig' %}
+{% block title %}{{ screen.name }}{% endblock %}
+{% block body %}
+    <div class="container">
+       
+        {% if pictures is not empty %}
+            <div class="pictures-grid">
+                {% for picture in pictures %}
+                    <div class="picture-item">
+                        
+                        {# Affichage de l'image #}
+                        {% if picture.imageName %}
+                            <img src="{{ asset('uploads/pictures/' ~ picture.imageName) }}" 
+                                 alt="{{ picture.name ?? 'Picture #' ~ picture.id }}"
+                                 class="picture-image">
+                        {% endif %}
+                        
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p>Aucune picture associée à ce screen.</p>
+        {% endif %}
+    </div>
+{% endblock %}

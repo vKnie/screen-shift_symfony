@@ -69,4 +69,20 @@ final class ScreenController extends AbstractController
 
         return $this->redirectToRoute('app_screen');
     }
+
+    #[Route('/screen/{id}', name: 'screen_show', requirements: ['id' => '\d+'])]
+    public function show(int $id, ScreenRepository $screenRepository): Response
+    {
+        $screen = $screenRepository->find($id);
+        
+        if (!$screen) {
+            throw $this->createNotFoundException('Screen non trouvé');
+        }
+        
+        return $this->render('screen/show.html.twig', [
+            'screen' => $screen,
+            'pictures' => $screen->getPictures(),
+        ]);
+    }
+    
 }
