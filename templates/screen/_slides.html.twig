@@ -1,0 +1,9 @@
+{% if pictures is not empty %}
+    {% for picture in pictures %}
+        {% if picture.imageName %}
+            <div class="slide position-absolute w-100 h-100 d-flex align-items-center justify-content-center" data-delay="{{ picture.delay }}">
+                <img src="{{ asset('uploads/pictures/' ~ picture.imageName) }}" class="w-100 h-100" alt="">
+            </div>
+        {% endif %}
+    {% endfor %}
+{% endif %}

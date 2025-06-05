@@ -10,6 +10,7 @@
     <table class="table table-hover">
         <thead>
             <tr>
+                <th>ID</th>
                 <th>Nom</th>
                 <th>Groupe</th>
                 <th>Actions</th>
@@ -18,6 +19,7 @@
         <tbody>
             {% for screen in screens %}
                 <tr>
+                    <td>{{ screen.id }}</td>
                     <td>{{ screen.name }}</td>
                     <td>{{ screen.groupeScreen.name }}</td>
                     <td>
@@ -26,6 +28,7 @@
                         <form method="post" action="{{ path('delete_screen', {id: screen.id}) }}" style="display:inline-block;">
                             <button class="btn btn-sm btn-danger">Supprimer</button>
                         </form>
+                        <a href="{{ path('screen_show', {id: screen.id}) }}" class="btn btn-success btn-sm">Affichage</a>
                     </td>
                 </tr>
             {% else %}

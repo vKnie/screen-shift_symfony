@@ -1,25 +1,132 @@
 {% extends 'base.html.twig' %}
-{% block title %}{{ screen.name }}{% endblock %}
+{% block title %}Slideshow{% endblock %}
 {% block body %}
-    <div class="container">
-       
+    <style>
+        body {
+            background: #000;
+            overflow: hidden;
+        }
+        
+        .slide {
+            transition: opacity 1s ease-in-out;
+            opacity: 0;
+        }
+        
+        .slide.active {
+            opacity: 1;
+        }
+        
+        .slide img {
+            object-fit: contain;
+        }
+    </style>
+
+    <div class="position-fixed top-0 start-0 w-100 vh-100 d-flex align-items-center justify-content-center" id="slideshow-container">
         {% if pictures is not empty %}
-            <div class="pictures-grid">
-                {% for picture in pictures %}
-                    <div class="picture-item">
-                        
-                        {# Affichage de l'image #}
-                        {% if picture.imageName %}
-                            <img src="{{ asset('uploads/pictures/' ~ picture.imageName) }}" 
-                                 alt="{{ picture.name ?? 'Picture #' ~ picture.id }}"
-                                 class="picture-image">
-                        {% endif %}
-                        
+            {% for picture in pictures %}
+                {% if picture.imageName %}
+                    <div class="slide position-absolute w-100 h-100 d-flex align-items-center justify-content-center" data-delay="{{ picture.delay }}">
+                        <img src="{{ asset('uploads/pictures/' ~ picture.imageName) }}" class="w-100 h-100" alt="">
                     </div>
-                {% endfor %}
-            </div>
-        {% else %}
-            <p>Aucune picture associée à ce screen.</p>
+                {% endif %}
+            {% endfor %}
         {% endif %}
     </div>
+
+    <script>
+        class Slideshow {
+            constructor(screenId) {
+                this.screenId = screenId;
+                this.slides = [];
+                this.currentSlide = 0;
+                this.timeoutId = null;
+                this.init();
+                this.startPolling();
+            }
+
+            init() {
+                this.updateSlides();
+                if (this.slides.length > 0) {
+                    this.showSlide(0);
+                    this.nextSlide();
+                }
+            }
+
+            updateSlides() {
+                this.slides = document.querySelectorAll('.slide');
+            }
+
+            showSlide(index) {
+                this.slides.forEach(slide => slide.classList.remove('active'));
+                if (this.slides[index]) {
+                    this.slides[index].classList.add('active');
+                }
+            }
+
+            nextSlide() {
+                if (this.slides.length === 0) return;
+                
+                const currentDelay = parseInt(this.slides[this.currentSlide].getAttribute('data-delay')) * 1000;
+                
+                this.timeoutId = setTimeout(() => {
+                    this.currentSlide = (this.currentSlide + 1) % this.slides.length;
+                    this.showSlide(this.currentSlide);
+                    this.nextSlide();
+                }, currentDelay);
+            }
+
+            restart() {
+                // Arrêter le slideshow actuel
+                if (this.timeoutId) {
+                    clearTimeout(this.timeoutId);
+                }
+                
+                // Réinitialiser
+                this.currentSlide = 0;
+                this.updateSlides();
+                
+                if (this.slides.length > 0) {
+                    this.showSlide(0);
+                    this.nextSlide();
+                }
+            }
+
+            // Polling pour vérifier les nouvelles images
+            async startPolling() {
+                setInterval(async () => {
+                    try {
+                        const response = await fetch(`/screen/${this.screenId}/check-updates`);
+                        const data = await response.json();
+                        
+                        if (data.hasUpdates) {
+                            await this.loadNewSlides();
+                        }
+                    } catch (error) {
+                        console.error('Erreur lors de la vérification des mises à jour:', error);
+                    }
+                }, 5000); // Vérifier toutes les 5 secondes
+            }
+
+            async loadNewSlides() {
+                try {
+                    const response = await fetch(`/screen/${this.screenId}/get-slides`);
+                    const html = await response.text();
+                    
+                    // Remplacer le contenu du container
+                    document.getElementById('slideshow-container').innerHTML = html;
+                    
+                    // Redémarrer le slideshow
+                    this.restart();
+                } catch (error) {
+                    console.error('Erreur lors du chargement des nouvelles slides:', error);
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Récupérer l'ID du screen depuis l'URL ou une variable
+            const screenId = {{ screen.id }};
+            new Slideshow(screenId);
+        });
+    </script>
 {% endblock %}
