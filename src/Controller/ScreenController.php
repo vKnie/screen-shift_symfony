@@ -82,10 +82,9 @@ final class ScreenController extends AbstractController
         // Filtrer les pictures actives (entre startDate et endDate)
         $activePictures = $this->getActivePictures($screen);
 
-        // Stocker le timestamp et l'ID du screen en session pour le polling
+        // Stocker le hash initial des images
         $session = $this->requestStack->getSession();
-        $session->set('last_check_screen_' . $id, time());
-        $session->set('current_screen_id', $id);
+        $session->set('last_pictures_hash_' . $id, $this->generatePicturesHash($activePictures));
        
         return $this->render('screen/show.html.twig', [
             'screen' => $screen,
@@ -97,19 +96,30 @@ final class ScreenController extends AbstractController
     public function checkUpdates(int $id, ScreenRepository $screenRepository): JsonResponse
     {
         $session = $this->requestStack->getSession();
-        $lastCheck = $session->get('last_check_screen_' . $id, 0);
         
         $screen = $screenRepository->find($id);
         if (!$screen) {
             return new JsonResponse(['hasUpdates' => false]);
         }
         
-        // Vérifier s'il y a eu des changements depuis la dernière vérification
-        $hasUpdates = $this->hasNewPicturesForScreen($screen, $lastCheck);
+        // Récupérer les images actuellement actives
+        $currentActivePictures = $this->getActivePictures($screen);
+        
+        // Créer un hash des données importantes pour détecter les changements
+        $currentHash = $this->generatePicturesHash($currentActivePictures);
+        
+        // Récupérer le hash précédent
+        $lastHash = $session->get('last_pictures_hash_' . $id, '');
+        
+        // S'il y a un changement dans le hash, il faut mettre à jour
+        $hasUpdates = ($currentHash !== $lastHash);
         
         if ($hasUpdates) {
-            $session->set('last_check_screen_' . $id, time());
+            $session->set('last_pictures_hash_' . $id, $currentHash);
         }
+
+        // Pour debug
+        error_log("Screen $id - Current hash: $currentHash, Last hash: $lastHash, Updates: " . ($hasUpdates ? 'YES' : 'NO'));
 
         return new JsonResponse(['hasUpdates' => $hasUpdates]);
     }
@@ -151,23 +161,32 @@ final class ScreenController extends AbstractController
         return $activePictures;
     }
 
+    private function generatePicturesHash(array $pictures): string
+    {
+        $data = [];
+        
+        foreach ($pictures as $picture) {
+            $data[] = [
+                'id' => $picture->getId(),
+                'delay' => $picture->getDelay(),
+                'imageName' => $picture->getImageName(),
+                'startDate' => $picture->getStartDate() ? $picture->getStartDate()->format('Y-m-d H:i:s') : null,
+                'endDate' => $picture->getEndDate() ? $picture->getEndDate()->format('Y-m-d H:i:s') : null,
+                'updatedAt' => $picture->getUpdatedAt() ? $picture->getUpdatedAt()->format('Y-m-d H:i:s') : null,
+            ];
+        }
+        
+        return md5(json_encode($data));
+    }
+
     private function hasNewPicturesForScreen(Screen $screen, int $lastCheck): bool
     {
-        // Vérifier s'il y a de nouvelles pictures pour ce screen depuis $lastCheck
-        // Ou si les dates d'activation ont changé
+        // Cette méthode n'est plus utilisée avec le système de hash
+        // Mais on peut la garder au cas où
         $count = 0;
         
         foreach ($screen->getPictures() as $picture) {
-            // Vérifier si l'image a été modifiée
             if ($picture->getUpdatedAt() && $picture->getUpdatedAt()->getTimestamp() > $lastCheck) {
-                $count++;
-            }
-            
-            // Ou si une image devient active maintenant
-            $now = new \DateTime();
-            if ($picture->getStartDate() && 
-                $picture->getStartDate()->getTimestamp() > $lastCheck && 
-                $picture->getStartDate()->getTimestamp() <= $now->getTimestamp()) {
                 $count++;
             }
         }

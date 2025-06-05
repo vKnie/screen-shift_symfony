@@ -24,6 +24,7 @@ class PictureForm extends AbstractType
                 'label' => 'Image (JPEG, PNG...)',
                 'allow_delete' => false,
                 'download_uri' => false,
+                'image_uri' => false,
             ])
             ->add('screenPicture', EntityType::class, [
                 'class' => Screen::class,

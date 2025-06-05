@@ -95,10 +95,14 @@
             async startPolling() {
                 setInterval(async () => {
                     try {
+                        console.log('Vérification des mises à jour...');
                         const response = await fetch(`/screen/${this.screenId}/check-updates`);
                         const data = await response.json();
                         
+                        console.log('Réponse:', data);
+                        
                         if (data.hasUpdates) {
+                            console.log('Mises à jour détectées, rechargement des slides...');
                             await this.loadNewSlides();
                         }
                     } catch (error) {
