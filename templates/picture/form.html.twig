@@ -20,7 +20,9 @@
         </div>
         <div class="mb-3">
             {{ form_label(form.backgroundColor) }}
-            {{ form_widget(form.backgroundColor, {'attr': {'class': 'form-control'}}) }}
+            <div class="d-flex align-items-center gap-3">
+                {{ form_widget(form.backgroundColor, {'attr': {'id': 'color-picker'}}) }}
+            </div>
             {{ form_errors(form.backgroundColor) }}
         </div>
         <div class="mb-3">

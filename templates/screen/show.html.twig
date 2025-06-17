@@ -23,9 +23,14 @@
 
     <div class="position-fixed top-0 start-0 w-100 vh-100 d-flex align-items-center justify-content-center" id="slideshow-container">
         {% if pictures is not empty %}
-            {% for picture in pictures %}
+            {% set sortedPictures = pictures|sort((a, b) => a.position <=> b.position) %}
+            {% for picture in sortedPictures %}
                 {% if picture.imageName %}
-                    <div class="slide position-absolute w-100 h-100 d-flex align-items-center justify-content-center" data-delay="{{ picture.delay }}">
+                    <div class="slide position-absolute w-100 h-100 d-flex align-items-center justify-content-center" 
+                         data-delay="{{ picture.delay }}"
+                         data-bg-color="{{ picture.backgroundColor|default('#000') }}"
+                         data-position="{{ picture.position }}"
+                         style="background-color: {{ picture.backgroundColor|default('#000') }};">
                         <img src="{{ asset('uploads/pictures/' ~ picture.imageName) }}" class="w-100 h-100" alt="">
                     </div>
                 {% endif %}
@@ -48,7 +53,7 @@
                 this.updateSlides();
                 if (this.slides.length > 0) {
                     this.showSlide(0);
-                    this.nextSlide();
+                    this.scheduleNextSlide();
                 }
             }
 
@@ -57,13 +62,22 @@
             }
 
             showSlide(index) {
+                console.log(`Affichage de la slide ${index}`);
                 this.slides.forEach(slide => slide.classList.remove('active'));
                 if (this.slides[index]) {
                     this.slides[index].classList.add('active');
+                    
+                    // Optionnel : changer aussi la couleur de fond du body
+                    const bgColor = this.slides[index].getAttribute('data-bg-color');
+                    if (bgColor) {
+                        document.body.style.backgroundColor = bgColor;
+                    }
+                    
+                    console.log(`Slide ${index} active, delay: ${this.slides[index].getAttribute('data-delay')}s`);
                 }
             }
 
-            nextSlide() {
+            scheduleNextSlide() {
                 if (this.slides.length === 0) return;
                 
                 const currentDelay = parseInt(this.slides[this.currentSlide].getAttribute('data-delay')) * 1000;
@@ -71,7 +85,7 @@
                 this.timeoutId = setTimeout(() => {
                     this.currentSlide = (this.currentSlide + 1) % this.slides.length;
                     this.showSlide(this.currentSlide);
-                    this.nextSlide();
+                    this.scheduleNextSlide();
                 }, currentDelay);
             }
 
@@ -79,6 +93,7 @@
                 // Arrêter le slideshow actuel
                 if (this.timeoutId) {
                     clearTimeout(this.timeoutId);
+                    this.timeoutId = null;
                 }
                 
                 // Réinitialiser
@@ -87,7 +102,7 @@
                 
                 if (this.slides.length > 0) {
                     this.showSlide(0);
-                    this.nextSlide();
+                    this.scheduleNextSlide();
                 }
             }
 
@@ -113,12 +128,14 @@
 
             async loadNewSlides() {
                 try {
+                    console.log('Chargement des nouvelles slides...');
                     const response = await fetch(`/screen/${this.screenId}/get-slides`);
                     const html = await response.text();
                     
                     // Remplacer le contenu du container
                     document.getElementById('slideshow-container').innerHTML = html;
                     
+                    console.log('Nouvelles slides chargées, redémarrage...');
                     // Redémarrer le slideshow
                     this.restart();
                 } catch (error) {

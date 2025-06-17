@@ -44,6 +44,8 @@ final class PictureController extends AbstractController
     #[Route('/picture/edit/{id}', name: 'edit_picture')]
     public function edit(Picture $picture, Request $request, EntityManagerInterface $em): Response
     {
+        dump('Couleur depuis DB:', $picture->getBackgroundColor());
+        
         $form = $this->createForm(PictureForm::class, $picture);
         $form->handleRequest($request);
 

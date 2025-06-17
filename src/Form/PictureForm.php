@@ -5,6 +5,7 @@ namespace App\Form;
 use App\Entity\Picture;
 use App\Entity\Screen;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
+use Symfony\Component\Form\Extension\Core\Type\ColorType;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
@@ -18,7 +19,13 @@ class PictureForm extends AbstractType
             ->add('delay')
             ->add('startDate')
             ->add('endDate')
-            ->add('backgroundColor')
+            ->add('backgroundColor', ColorType::class, [
+                'label' => 'Couleur de fond',
+                'attr' => [
+                    'class' => 'form-control form-control-color',
+                    'style' => 'width: 100px; height: 50px;'
+                ]
+            ])
             ->add('imageFile', VichImageType::class, [
                 'required' => false,
                 'label' => 'Image (JPEG, PNG...)',
