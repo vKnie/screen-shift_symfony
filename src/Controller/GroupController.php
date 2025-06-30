@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Controller;
 
 use App\Entity\Group;
@@ -29,9 +28,12 @@ final class GroupController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            // Le rôle est automatiquement généré lors du setName() dans l'entité
             $em->persist($group);
             $em->flush();
 
+            $this->addFlash('success', sprintf('Groupe "%s" créé avec le rôle "%s"', $group->getName(), $group->getRole()));
+            
             return $this->redirectToRoute('app_group');
         }
 
@@ -47,7 +49,11 @@ final class GroupController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            // Le rôle sera automatiquement mis à jour si le nom change
             $em->flush();
+
+            $this->addFlash('success', sprintf('Groupe "%s" modifié avec le rôle "%s"', $group->getName(), $group->getRole()));
+            
             return $this->redirectToRoute('app_group');
         }
 
@@ -60,10 +66,12 @@ final class GroupController extends AbstractController
     #[Route('/group/delete/{id}', name: 'delete_group')]
     public function delete(Group $group, EntityManagerInterface $em): Response
     {
+        $groupName = $group->getName();
         $em->remove($group);
         $em->flush();
 
+        $this->addFlash('success', sprintf('Groupe "%s" supprimé', $groupName));
+        
         return $this->redirectToRoute('app_group');
     }
-
 }

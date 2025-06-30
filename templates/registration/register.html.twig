@@ -1,0 +1,83 @@
+{% extends 'base.html.twig' %}
+{% block title %}Register{% endblock %}
+{% block body %}
+    {{ form_start(registrationForm, {'method': 'post'}) }}
+        {% if form_errors(registrationForm) %}
+            <div class="alert alert-danger">{{ form_errors(registrationForm) }}</div>
+        {% endif %}
+        
+        <h1>Register</h1>
+        <hr>
+        
+        <label for="{{ registrationForm.email.vars.id }}">Email</label>
+        {{ form_widget(registrationForm.email, {'attr': {'class': 'form-control'}}) }}
+        {{ form_errors(registrationForm.email) }}
+        
+        <div class="password-container">
+            <label for="{{ registrationForm.plainPassword.first.vars.id }}">Password</label>
+            <div class="input-group">
+                {{ form_widget(registrationForm.plainPassword.first, {'attr': {'class': 'form-control password-field'}}) }}
+                <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('{{ registrationForm.plainPassword.first.vars.id }}', this)">
+                    <i class="fa fa-eye" id="eye-icon-{{ registrationForm.plainPassword.first.vars.id }}"></i>
+                </button>
+            </div>
+            {{ form_errors(registrationForm.plainPassword.first) }}
+        </div>
+        
+        <div class="password-container">
+            <label for="{{ registrationForm.plainPassword.second.vars.id }}">Confirm Password</label>
+            <div class="input-group">
+                {{ form_widget(registrationForm.plainPassword.second, {'attr': {'class': 'form-control password-field'}}) }}
+                <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('{{ registrationForm.plainPassword.second.vars.id }}', this)">
+                    <i class="fa fa-eye" id="eye-icon-{{ registrationForm.plainPassword.second.vars.id }}"></i>
+                </button>
+            </div>
+            {{ form_errors(registrationForm.plainPassword.second) }}
+        </div>
+        
+        <div class="form-check mt-3">
+            {{ form_widget(registrationForm.agreeTerms, {'attr': {'class': 'form-check-input'}}) }}
+            <label for="{{ registrationForm.agreeTerms.vars.id }}" class="form-check-label">
+                {{ registrationForm.agreeTerms.vars.label }}
+            </label>
+        </div>
+        {{ form_errors(registrationForm.agreeTerms) }}
+        
+        <button type="submit" class="btn btn-primary mt-3">Register</button>
+    {{ form_end(registrationForm) }}
+    
+    <style>
+        .password-container {
+            margin-bottom: 1rem;
+        }
+        .input-group .btn {
+            border-left: 0;
+        }
+        .input-group .form-control:focus {
+            border-right: 0;
+            box-shadow: none;
+        }
+        .input-group .btn:focus {
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+    </style>
+    
+    <script>
+        function togglePassword(fieldId, button) {
+            const passwordField = document.getElementById(fieldId);
+            const eyeIcon = document.getElementById('eye-icon-' + fieldId);
+            
+            if (passwordField.type === 'password') {
+                passwordField.type = 'text';
+                eyeIcon.classList.remove('fa-eye');
+                eyeIcon.classList.add('fa-eye-slash');
+                button.setAttribute('aria-label', 'Hide password');
+            } else {
+                passwordField.type = 'password';
+                eyeIcon.classList.remove('fa-eye-slash');
+                eyeIcon.classList.add('fa-eye');
+                button.setAttribute('aria-label', 'Show password');
+            }
+        }
+    </script>
+{% endblock %}

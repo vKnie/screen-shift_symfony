@@ -28,46 +28,116 @@ final class ScreenController extends AbstractController
             'screens' => $screenRepository->findAll(),
         ]);
     }
-    
+
     #[Route('/screen/create', name: 'create_screen')]
     public function create(Request $request, EntityManagerInterface $em): Response
     {
         $screen = new Screen();
         $form = $this->createForm(ScreenForm::class, $screen);
         $form->handleRequest($request);
+        
         if ($form->isSubmitted() && $form->isValid()) {
+            $selectedGroupe = $screen->getGroupeScreen();
+            $currentUser = $this->getUser();
+            
+            // Vérifier si l'utilisateur a le rôle du groupe sélectionné
+            if (!$this->userHasGroupeRole($currentUser, $selectedGroupe)) {
+                $this->addFlash('error', 'Vous n\'avez pas les permissions pour créer un screen pour ce groupe.');
+                return $this->render('screen/form.html.twig', [
+                    'form' => $form->createView(),
+                ]);
+            }
+            
             $em->persist($screen);
             $em->flush();
             $this->addFlash('success', 'Screen créé avec succès.');
             return $this->redirectToRoute('app_screen');
         }
+        
         return $this->render('screen/form.html.twig', [
             'form' => $form->createView(),
         ]);
     }
-    
+
     #[Route('/screen/edit/{id}', name: 'edit_screen')]
     public function edit(Screen $screen, Request $request, EntityManagerInterface $em): Response
     {
+        // Vérifier que l'utilisateur peut modifier ce screen (il doit avoir le rôle du groupe)
+        $currentUser = $this->getUser();
+        if (!$this->userHasGroupeRole($currentUser, $screen->getGroupeScreen())) {
+            $this->addFlash('error', 'Vous n\'avez pas les permissions pour modifier ce screen.');
+            return $this->redirectToRoute('app_screen');
+        }
+        
         $form = $this->createForm(ScreenForm::class, $screen);
         $form->handleRequest($request);
+        
         if ($form->isSubmitted() && $form->isValid()) {
+            $selectedGroupe = $screen->getGroupeScreen();
+            
+            // Vérifier si l'utilisateur a le rôle du nouveau groupe sélectionné
+            if (!$this->userHasGroupeRole($currentUser, $selectedGroupe)) {
+                $this->addFlash('error', 'Vous n\'avez pas les permissions pour assigner ce screen à ce groupe.');
+                return $this->render('screen/form.html.twig', [
+                    'form' => $form->createView(),
+                    'edit' => true,
+                ]);
+            }
+            
             $em->flush();
             $this->addFlash('success', 'Screen modifié avec succès.');
             return $this->redirectToRoute('app_screen');
         }
+        
         return $this->render('screen/form.html.twig', [
             'form' => $form->createView(),
             'edit' => true,
         ]);
     }
-    
+
     #[Route('/screen/delete/{id}', name: 'delete_screen')]
     public function delete(Screen $screen, EntityManagerInterface $em): Response
     {
+        // Vérifier que l'utilisateur peut supprimer ce screen
+        $currentUser = $this->getUser();
+        if (!$this->userHasGroupeRole($currentUser, $screen->getGroupeScreen())) {
+            $this->addFlash('error', 'Vous n\'avez pas les permissions pour supprimer ce screen.');
+            return $this->redirectToRoute('app_screen');
+        }
+        
         $em->remove($screen);
         $em->flush();
+        $this->addFlash('success', 'Screen supprimé avec succès.');
         return $this->redirectToRoute('app_screen');
+    }
+
+    /**
+     * Vérifie si l'utilisateur a le rôle requis pour le groupe
+     */
+    private function userHasGroupeRole($user, $groupeScreen): bool
+    {
+        if (!$user || !$groupeScreen) {
+            return false;
+        }
+        
+        // Si l'utilisateur est admin, il peut tout faire
+        if (in_array('ROLE_ADMIN', $user->getRoles())) {
+            return true;
+        }
+        
+        // Vérifier si l'utilisateur a le rôle spécifique du groupe
+        $requiredRole = $groupeScreen->getRole();
+        if ($requiredRole && in_array($requiredRole, $user->getRoles())) {
+            return true;
+        }
+        
+        // Alternative : vérifier si l'utilisateur appartient au groupe
+        // (si vous avez une relation User <-> GroupeScreen)
+        // if ($user->getGroupes() && $user->getGroupes()->contains($groupeScreen)) {
+        //     return true;
+        // }
+        
+        return false;
     }
     
     #[Route('/screen/{id}', name: 'screen_show', requirements: ['id' => '\d+'])]

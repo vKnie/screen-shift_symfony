@@ -1,16 +1,15 @@
 {% extends 'base.html.twig' %}
-
 {% block body %}
-
     <h1>Liste des groupes</h1>
     <hr>
-
     <a href="{{ path('create_group') }}" class="btn btn-success">Créer un groupe</a>
-
     <table class="table table-hover">
         <thead>
             <tr>
                 <th>Nom</th>
+                {% if is_granted('ROLE_ADMIN') %}
+                    <th>Rôle</th>
+                {% endif %}
                 <th>Actions</th>
             </tr>
         </thead>
@@ -18,16 +17,21 @@
             {% for group in groups %}
                 <tr>
                     <td>{{ group.name }}</td>
+                    {% if is_granted('ROLE_ADMIN') %}
+                        <td>
+                            <span class="badge bg-secondary">{{ group.role }}</span>
+                        </td>
+                    {% endif %}
                     <td>
                         <a href="{{ path('edit_group', {id: group.id}) }}" class="btn btn-sm btn-primary">Modifier</a>
                         <form method="post" action="{{ path('delete_group', {id: group.id}) }}" style="display:inline-block;">
-                            <button class="btn btn-sm btn-danger">Supprimer</button>
+                            <button class="btn btn-sm btn-danger" onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce groupe ?')">Supprimer</button>
                         </form>
                     </td>
                 </tr>
             {% else %}
                 <tr>
-                    <td colspan="3">Aucun groupe trouvé.</td>
+                    <td colspan="{{ is_granted('ROLE_ADMIN') ? '4' : '3' }}">Aucun groupe trouvé.</td>
                 </tr>
             {% endfor %}
         </tbody>

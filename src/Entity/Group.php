@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Entity;
 
 use App\Repository\GroupRepository;
@@ -18,6 +17,9 @@ class Group
 
     #[ORM\Column(length: 255)]
     private ?string $name = null;
+
+    #[ORM\Column(length: 255)]
+    private ?string $role = null;
 
     /**
      * @var Collection<int, Screen>
@@ -44,8 +46,34 @@ class Group
     public function setName(string $name): static
     {
         $this->name = $name;
-
+        // Générer automatiquement le rôle basé sur le nom
+        $this->generateRole();
         return $this;
+    }
+
+    public function getRole(): ?string
+    {
+        return $this->role;
+    }
+
+    public function setRole(string $role): static
+    {
+        $this->role = $role;
+        return $this;
+    }
+
+    /**
+     * Génère automatiquement le rôle basé sur le nom du groupe
+     */
+    private function generateRole(): void
+    {
+        if ($this->name) {
+            // Convertir le nom en majuscules, remplacer les espaces par des underscores
+            // et nettoyer les caractères spéciaux
+            $cleanName = strtoupper(preg_replace('/[^a-zA-Z0-9\s]/', '', $this->name));
+            $cleanName = str_replace(' ', '_', $cleanName);
+            $this->role = 'ROLE_' . $cleanName;
+        }
     }
 
     /**
