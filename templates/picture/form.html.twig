@@ -2,6 +2,21 @@
 {% block body %}
     <h1>{{ edit is defined ? 'Modifier une image' : 'Créer une image' }}</h1>
     <hr>
+    
+    {% for message in app.flashes('success') %}
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    {% endfor %}
+   
+    {% for message in app.flashes('error') %}
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    {% endfor %}
+    
     {{ form_start(form) }}
         <div class="mb-3">
             {{ form_label(form.delay) }}
@@ -38,5 +53,6 @@
         <button type="submit" class="btn btn-primary">
             {{ edit is defined ? 'Mettre à jour' : 'Créer' }}
         </button>
+        <a href="{{ path('app_picture') }}" class="btn btn-secondary">Retour</a>
     {{ form_end(form) }}
 {% endblock %}

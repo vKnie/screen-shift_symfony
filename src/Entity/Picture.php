@@ -29,6 +29,10 @@ class Picture
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $backgroundColor = null;
 
+    // PROPRIÉTÉ POSITION (colonne déjà existante en base)
+    #[ORM\Column(type: Types::INTEGER, nullable: true)]
+    private ?int $position = null;
+
     #[ORM\ManyToOne(inversedBy: 'pictures')]
     #[ORM\JoinColumn(nullable: false)]
     private ?Screen $screenPicture = null;
@@ -43,7 +47,6 @@ class Picture
     private ?\DateTimeInterface $updatedAt = null;
 
     // Getters & Setters
-
     public function getId(): ?int
     {
         return $this->id;
@@ -93,6 +96,18 @@ class Picture
         return $this;
     }
 
+    // GETTERS/SETTERS POUR POSITION
+    public function getPosition(): ?int
+    {
+        return $this->position;
+    }
+
+    public function setPosition(?int $position): static
+    {
+        $this->position = $position;
+        return $this;
+    }
+
     public function getScreenPicture(): ?Screen
     {
         return $this->screenPicture;
@@ -112,11 +127,9 @@ class Picture
     public function setImageFile(?File $imageFile): static
     {
         $this->imageFile = $imageFile;
-
         if ($imageFile !== null) {
             $this->updatedAt = new \DateTimeImmutable();
         }
-
         return $this;
     }
 

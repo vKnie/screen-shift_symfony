@@ -2,6 +2,20 @@
 {% block body %}
     <h1>{{ edit is defined ? 'Modifier un screen' : 'Créer un screen' }}</h1>
     <hr>
+    
+    {% for message in app.flashes('success') %}
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    {% endfor %}
+   
+    {% for message in app.flashes('error') %}
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    {% endfor %}
    
     {{ form_start(form) }}
         <div class="mb-3">
@@ -32,9 +46,9 @@
         <button type="submit" class="btn btn-primary">
             {{ edit is defined ? 'Mettre à jour' : 'Créer' }}
         </button>
-        
+       
         {# Marquer le champ comme rendu pour éviter qu'il apparaisse dans form_end #}
         {% do form.groupeScreen.setRendered %}
-        
+       
     {{ form_end(form) }}
 {% endblock %}

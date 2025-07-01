@@ -1,11 +1,23 @@
 {% extends 'base.html.twig' %}
-
 {% block body %}
     <h1>Liste des images</h1>
     <hr>
-
+   
+    {% for message in app.flashes('success') %}
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    {% endfor %}
+   
+    {% for message in app.flashes('error') %}
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    {% endfor %}
+   
     <a href="{{ path('create_picture') }}" class="btn btn-success mb-3">Ajouter une image</a>
-
     <table class="table table-hover">
         <thead>
             <tr>
@@ -32,13 +44,13 @@
                     <td>
                         <a href="{{ path('edit_picture', {id: picture.id}) }}" class="btn btn-primary btn-sm">Modifier</a>
                         <form method="post" action="{{ path('delete_picture', {id: picture.id}) }}" style="display:inline-block;">
-                            <button class="btn btn-sm btn-danger">Supprimer</button>
+                            <button class="btn btn-sm btn-danger" onclick="return confirm('Êtes-vous sûr de vouloir supprimer cette image ?')">Supprimer</button>
                         </form>
                     </td>
                 </tr>
             {% else %}
                 <tr>
-                    <td colspan="8">Aucune image trouvée.</td>
+                    <td colspan="6">Aucune image trouvée.</td>
                 </tr>
             {% endfor %}
         </tbody>

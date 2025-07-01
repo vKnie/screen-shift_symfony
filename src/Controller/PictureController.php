@@ -29,11 +29,17 @@ final class PictureController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $em->persist($picture);
-            $em->flush();
-
-            $this->addFlash('success', 'Image ajoutée avec succès.');
-            return $this->redirectToRoute('app_picture');
+            try {
+                $em->persist($picture);
+                $em->flush();
+                
+                $screenName = $picture->getScreenPicture() ? $picture->getScreenPicture()->getName() : 'N/A';
+                $this->addFlash('success', sprintf('Image ajoutée avec succès au screen "%s".', $screenName));
+                
+                return $this->redirectToRoute('app_picture');
+            } catch (\Exception $e) {
+                $this->addFlash('error', 'Erreur lors de l\'ajout de l\'image : ' . $e->getMessage());
+            }
         }
 
         return $this->render('picture/form.html.twig', [
@@ -44,16 +50,20 @@ final class PictureController extends AbstractController
     #[Route('/picture/edit/{id}', name: 'edit_picture')]
     public function edit(Picture $picture, Request $request, EntityManagerInterface $em): Response
     {
-        dump('Couleur depuis DB:', $picture->getBackgroundColor());
-        
         $form = $this->createForm(PictureForm::class, $picture);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $em->flush();
-
-            $this->addFlash('success', 'Image modifiée avec succès.');
-            return $this->redirectToRoute('app_picture');
+            try {
+                $em->flush();
+                
+                $screenName = $picture->getScreenPicture() ? $picture->getScreenPicture()->getName() : 'N/A';
+                $this->addFlash('success', sprintf('Image modifiée avec succès pour le screen "%s".', $screenName));
+                
+                return $this->redirectToRoute('app_picture');
+            } catch (\Exception $e) {
+                $this->addFlash('error', 'Erreur lors de la modification de l\'image : ' . $e->getMessage());
+            }
         }
 
         return $this->render('picture/form.html.twig', [
@@ -65,8 +75,17 @@ final class PictureController extends AbstractController
     #[Route('/picture/delete/{id}', name: 'delete_picture')]
     public function delete(Picture $picture, EntityManagerInterface $em, Request $request): Response
     {
-        $em->remove($picture);
-        $em->flush();
+        try {
+            $screenName = $picture->getScreenPicture() ? $picture->getScreenPicture()->getName() : 'N/A';
+            $imageName = $picture->getImageName() ?: 'Image sans nom';
+            
+            $em->remove($picture);
+            $em->flush();
+            
+            $this->addFlash('success', sprintf('Image "%s" supprimée avec succès du screen "%s".', $imageName, $screenName));
+        } catch (\Exception $e) {
+            $this->addFlash('error', 'Erreur lors de la suppression de l\'image : ' . $e->getMessage());
+        }
 
         return $this->redirectToRoute('app_picture');
     }
