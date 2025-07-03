@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Controller;
 
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -12,9 +11,13 @@ class SecurityController extends AbstractController
     #[Route(path: '/login', name: 'app_login')]
     public function login(AuthenticationUtils $authenticationUtils): Response
     {
+        // Si l'utilisateur est déjà connecté et a le bon rôle, rediriger
+        if ($this->getUser() && $this->isGranted('ROLE_ACCESS')) {
+            return $this->redirectToRoute('app_dashboard'); // Changez selon votre route
+        }
+
         // get the login error if there is one
         $error = $authenticationUtils->getLastAuthenticationError();
-
         // last username entered by the user
         $lastUsername = $authenticationUtils->getLastUsername();
 

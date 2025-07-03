@@ -75,7 +75,7 @@ final class UsersController extends AbstractController
         $groups = $groupRepository->findAll();
         
         // Rôles système de base
-        $systemRoles = ['ROLE_USER', 'ROLE_ADMIN'];
+        $systemRoles = ['ROLE_USER', 'ROLE_ADMIN', 'ROLE_ACCESS'];
         
         return $this->render('users/edit.html.twig', [
             'user' => $user,
@@ -138,7 +138,7 @@ final class UsersController extends AbstractController
         // Récupérer les rôles actuels de l'utilisateur (en gardant les rôles système)
         $currentRoles = $user->getRoles();
         $systemRoles = array_filter($currentRoles, function($role) {
-            return in_array($role, ['ROLE_USER', 'ROLE_ADMIN']);
+            return in_array($role, ['ROLE_USER', 'ROLE_ADMIN', 'ROLE_ACCESS']);
         });
         
         // Récupérer les nouveaux rôles de groupes

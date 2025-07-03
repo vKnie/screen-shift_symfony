@@ -42,11 +42,13 @@
                             <td>
                                 {% for role in user.roles %}
                                     {% if role == 'ROLE_ADMIN' %}
-                                        <span class="badge bg-danger">{{ role }}</span>
+                                        <span class="badge bg-danger me-1">{{ role }}</span>
                                     {% elseif role == 'ROLE_USER' %}
-                                        <span class="badge bg-primary">{{ role }}</span>
+                                        <span class="badge bg-primary me-1">{{ role }}</span>
+                                    {% elseif role == 'ROLE_ACCESS' %}
+                                        <span class="badge bg-success me-1">{{ role }}</span>
                                     {% else %}
-                                        <span class="badge bg-secondary">{{ role }}</span>
+                                        <span class="badge bg-secondary me-1">{{ role }}</span>
                                     {% endif %}
                                 {% endfor %}
                             </td>

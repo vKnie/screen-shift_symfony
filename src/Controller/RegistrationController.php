@@ -17,24 +17,27 @@ class RegistrationController extends AbstractController
         $user = new User();
         $form = $this->createForm(RegistrationForm::class, $user);
         $form->handleRequest($request);
-        
+       
         if ($form->isSubmitted() && $form->isValid()) {
             /** @var string $plainPassword */
             $plainPassword = $form->get('plainPassword')->getData();
-            
+           
             // encode the plain password
             $user->setPassword($userPasswordHasher->hashPassword($user, $plainPassword));
-            
+           
             $entityManager->persist($user);
             $entityManager->flush();
-            
-            // Ajouter un message de succès
-            $this->addFlash('info', 'Votre compte a été créé avec succès. Vous pouvez maintenant vous connecter.');
-            
-            // Rediriger vers la page de connexion au lieu de connecter automatiquement
-            return $this->redirectToRoute('app_home');
+           
+            // Ajouter un message de succès avec information sur la validation admin
+            $this->addFlash('success', 
+                'Inscription réussie ! Votre compte a été créé avec succès. ' .
+                'Veuillez attendre qu\'un administrateur confirme votre accès pour vous connecter.'
+            );
+           
+            // Rediriger vers la page de connexion
+            return $this->redirectToRoute('app_login');
         }
-        
+       
         return $this->render('registration/register.html.twig', [
             'registrationForm' => $form,
         ]);

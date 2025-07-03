@@ -11,9 +11,10 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpFoundation\JsonResponse; // IMPORT AJOUTÉ
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 final class ScreenController extends AbstractController
 {
@@ -24,6 +25,7 @@ final class ScreenController extends AbstractController
         $this->requestStack = $requestStack;
     }
 
+    #[IsGranted('ROLE_ACCESS')]
     #[Route('/screen', name: 'app_screen')]
     public function index(ScreenRepository $screenRepository): Response
     {
@@ -32,6 +34,7 @@ final class ScreenController extends AbstractController
         ]);
     }
 
+    #[IsGranted('ROLE_ACCESS')]
     #[Route('/screen/create', name: 'create_screen')]
     public function create(Request $request, EntityManagerInterface $em): Response
     {
@@ -72,6 +75,7 @@ final class ScreenController extends AbstractController
         ]);
     }
 
+    #[IsGranted('ROLE_ACCESS')]
     #[Route('/screen/edit/{id}', name: 'edit_screen')]
     public function edit(Screen $screen, Request $request, EntityManagerInterface $em): Response
     {
@@ -117,6 +121,7 @@ final class ScreenController extends AbstractController
         ]);
     }
 
+    #[IsGranted('ROLE_ACCESS')]
     #[Route('/screen/delete/{id}', name: 'delete_screen')]
     public function delete(Screen $screen, EntityManagerInterface $em): Response
     {

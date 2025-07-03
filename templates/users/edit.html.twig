@@ -32,6 +32,8 @@
                                             <span class="badge bg-danger">{{ role }}</span>
                                         {% elseif role == 'ROLE_USER' %}
                                             <span class="badge bg-primary">{{ role }}</span>
+                                        {% elseif role == 'ROLE_ACCESS' %}
+                                            <span class="badge bg-success">{{ role }}</span>
                                         {% endif %}
                                     </label>
                                 </div>
@@ -74,6 +76,8 @@
                             <span class="badge bg-danger me-1 mb-1">{{ role }}</span>
                         {% elseif role == 'ROLE_USER' %}
                             <span class="badge bg-primary me-1 mb-1">{{ role }}</span>
+                        {% elseif role == 'ROLE_ACCESS' %}
+                            <span class="badge bg-success me-1 mb-1">{{ role }}</span>
                         {% else %}
                             <span class="badge bg-secondary me-1 mb-1">{{ role }}</span>
                         {% endif %}

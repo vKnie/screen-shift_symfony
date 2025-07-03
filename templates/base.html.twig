@@ -15,7 +15,7 @@
 </head>
 <body>
 <div class="d-flex">
-    {% if app.request.attributes.get('_route') != 'screen_show' %}
+    {% if app.request.attributes.get('_route') != 'screen_show' and is_granted('ROLE_ACCESS') %}
     <div class="d-flex flex-column flex-shrink-0 p-3 text-white bg-dark" style="width: 280px; height: 100vh;">
         <a href="{{ path('app_home') }}" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-white text-decoration-none">
             <span class="fs-4">Screen Shift</span>
@@ -27,8 +27,9 @@
         {% set group_routes = ['app_group', 'create_group', 'edit_group', 'delete_group'] %}
         {% set screen_routes = ['app_screen', 'create_screen', 'edit_screen', 'delete_screen'] %}
         {% set picture_routes = ['app_picture', 'create_picture', 'edit_picture', 'delete_picture', 'upload_picture'] %}
-        {% set user_routes = ['app_users', 'create_user', 'edit_user', 'delete_user'] %}
+        {% set user_routes = ['app_users', 'app_users_show', 'app_users_edit', 'app_users_delete', 'app_users_reset_password', 'app_users_assign_groups'] %}
         
+        {% if is_granted('ROLE_ACCESS') %}
         <ul class="nav nav-pills flex-column mb-auto">
             <li class="nav-item">
                 <a href="{{ path('app_home') }}" 
@@ -52,6 +53,7 @@
                 </a>
             </li>
         </ul>
+        {% endif %}
         
         <hr>
         
@@ -81,7 +83,7 @@
     </div>
     {% endif %}
    
-    <div class="{% if app.request.attributes.get('_route') == 'screen_show' %}{% else %}flex-grow-1 p-4{% endif %}">
+    <div class="{% if app.request.attributes.get('_route') == 'screen_show' or not is_granted('ROLE_ACCESS') %}w-100 p-4{% else %}flex-grow-1 p-4{% endif %}">
         {% block body %}{% endblock %}
     </div>
 </div>
