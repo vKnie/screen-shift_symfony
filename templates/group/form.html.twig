@@ -9,7 +9,6 @@
             {{ form_errors(form.name) }}
         </div>
         
-        {# Afficher le champ role seulement si l'utilisateur a le rôle ROLE_ADMIN #}
         {% if is_granted('ROLE_ADMIN') %}
             <div class="mb-3">
                 {{ form_label(form.role, null, {'label_attr': {'class': 'form-label'}}) }}

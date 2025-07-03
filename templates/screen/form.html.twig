@@ -27,7 +27,6 @@
         <div class="mb-3">
             {{ form_label(form.groupeScreen, null, {'label_attr': {'class': 'form-label'}}) }}
            
-            {# Widget personnalisé pour afficher nom + rôle #}
             <select name="{{ form.groupeScreen.vars.full_name }}" class="form-select" id="{{ form.groupeScreen.vars.id }}">
                 {% for choice in form.groupeScreen.vars.choices %}
                     <option value="{{ choice.value }}"
@@ -47,7 +46,6 @@
             {{ edit is defined ? 'Mettre à jour' : 'Créer' }}
         </button>
        
-        {# Marquer le champ comme rendu pour éviter qu'il apparaisse dans form_end #}
         {% do form.groupeScreen.setRendered %}
        
     {{ form_end(form) }}

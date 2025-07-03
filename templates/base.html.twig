@@ -21,38 +21,49 @@
             <span class="fs-4">Screen Shift</span>
         </a>
         <hr>
+        
+        {% set current_route = app.request.attributes.get('_route') %}
+        {% set home_routes = ['app_home'] %}
+        {% set group_routes = ['app_group', 'create_group', 'edit_group', 'delete_group'] %}
+        {% set screen_routes = ['app_screen', 'create_screen', 'edit_screen', 'delete_screen'] %}
+        {% set picture_routes = ['app_picture', 'create_picture', 'edit_picture', 'delete_picture', 'upload_picture'] %}
+        {% set user_routes = ['app_users', 'create_user', 'edit_user', 'delete_user'] %}
+        
         <ul class="nav nav-pills flex-column mb-auto">
             <li class="nav-item">
-                <a href="{{ path('app_home') }}" class="nav-link {% if app.request.attributes.get('_route') == 'app_home' %}active{% else %}text-light{% endif %}">
+                <a href="{{ path('app_home') }}" 
+                   class="nav-link {% if current_route in home_routes %}active{% else %}text-light{% endif %}">
                     <i class="bi bi-house me-2"></i>Home
                 </a>
-                <a href="{{ path('app_group') }}" class="nav-link {% if app.request.attributes.get('_route') == 'app_group' %}active{% else %}text-light{% endif %}">
+                
+                <a href="{{ path('app_group') }}" 
+                   class="nav-link {% if current_route in group_routes %}active{% else %}text-light{% endif %}">
                     <i class="bi bi-collection me-2"></i>Group
                 </a>
-                <a href="{{ path('app_screen') }}" class="nav-link {% if app.request.attributes.get('_route') == 'app_screen' %}active{% else %}text-light{% endif %}">
+                
+                <a href="{{ path('app_screen') }}" 
+                   class="nav-link {% if current_route in screen_routes %}active{% else %}text-light{% endif %}">
                     <i class="bi bi-arrows-fullscreen me-2"></i>Screen
                 </a>
-                <a href="{{ path('app_picture') }}" class="nav-link {% if app.request.attributes.get('_route') == 'app_picture' %}active{% else %}text-light{% endif %}">
+                
+                <a href="{{ path('app_picture') }}" 
+                   class="nav-link {% if current_route in picture_routes %}active{% else %}text-light{% endif %}">
                     <i class="bi bi-images me-2"></i>Picture
-                </a>
-                <a href="{{ path('app_configuration') }}" class="nav-link {% if app.request.attributes.get('_route') == 'app_configuration' %}active{% else %}text-light{% endif %}">
-                    <i class="bi bi-sliders me-2"></i>Configuration
                 </a>
             </li>
         </ul>
         
         <hr>
         
-        <!-- Section utilisateur en bas de la navbar -->
         {% if app.user %}
-            <!-- Utilisateur connecté -->
             <div class="text-center">
                 <div class="d-flex align-items-center justify-content-center mb-2 text-light">
                     <i class="bi bi-person-circle me-2"></i>
                     <small>{{ app.user.userIdentifier }}</small>
                 </div>
                 {% if is_granted('ROLE_ADMIN') %}
-                    <a href="{{ path('app_users') }}" class="btn btn-outline-info btn-sm w-100 mb-2">
+                    <a href="{{ path('app_users') }}" 
+                       class="btn {% if current_route in user_routes %}btn-info{% else %}btn-outline-info{% endif %} btn-sm w-100 mb-2">
                         <i class="bi bi-people me-1"></i>Gérer les utilisateurs
                     </a>
                 {% endif %}
@@ -61,13 +72,9 @@
                 </a>
             </div>
         {% else %}
-            <!-- Utilisateur non connecté -->
             <div class="d-grid gap-2">
                 <a href="{{ path('app_login') }}" class="btn btn-outline-light btn-sm">
                     <i class="bi bi-box-arrow-in-right me-1"></i>Se connecter
-                </a>
-                <a href="{{ path('app_register') }}" class="btn btn-primary btn-sm">
-                    <i class="bi bi-person-plus me-1"></i>S'inscrire
                 </a>
             </div>
         {% endif %}
