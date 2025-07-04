@@ -1,7 +1,12 @@
 {% if pictures is not empty %}
-    {% for picture in pictures %}
+    {% set sortedPictures = pictures|sort((a, b) => a.position <=> b.position) %}
+    {% for picture in sortedPictures %}
         {% if picture.imageName %}
-            <div class="slide position-absolute w-100 h-100 d-flex align-items-center justify-content-center" data-delay="{{ picture.delay }}">
+            <div class="slide position-absolute w-100 h-100 d-flex align-items-center justify-content-center" 
+                 data-delay="{{ picture.delay }}"
+                 data-bg-color="{{ picture.backgroundColor|default('#000') }}"
+                 data-position="{{ picture.position }}"
+                 style="background-color: {{ picture.backgroundColor|default('#000') }};">
                 <img src="{{ asset('uploads/pictures/' ~ picture.imageName) }}" class="w-100 h-100" alt="">
             </div>
         {% endif %}
