@@ -2,13 +2,26 @@
     {% set sortedPictures = pictures|sort((a, b) => a.position <=> b.position) %}
     {% for picture in sortedPictures %}
         {% if picture.imageName %}
-            <div class="slide position-absolute w-100 h-100 d-flex align-items-center justify-content-center" 
-                 data-delay="{{ picture.delay }}"
-                 data-bg-color="{{ picture.backgroundColor|default('#000') }}"
-                 data-position="{{ picture.position }}"
-                 style="background-color: {{ picture.backgroundColor|default('#000') }};">
-                <img src="{{ asset('uploads/pictures/' ~ picture.imageName) }}" class="w-100 h-100" alt="">
+            <div class="slide position-absolute w-100 h-100 d-flex align-items-center justify-content-center"
+                 data-delay="{{ picture.delay|default(5)|abs }}"
+                 data-bg-color="{{ picture.backgroundColor|default('#000000')|e('html_attr') }}"
+                 data-position="{{ picture.position|default(0)|abs }}"
+                 data-image-id="{{ picture.id }}"
+                 style="background-color: {{ picture.backgroundColor|default('#000000')|e('css') }};">
+                <img src="{{ asset('uploads/pictures/' ~ picture.imageName|e('url')) }}" 
+                     class="w-100 h-100" 
+                     alt="{{ picture.name|default('Image du diaporama')|e('html_attr') }}"
+                     loading="lazy"
+                     onerror="this.style.display='none'; console.error('Erreur de chargement image:', this.src);">
             </div>
         {% endif %}
     {% endfor %}
+{% else %}
+    <div class="slide position-absolute w-100 h-100 d-flex align-items-center justify-content-center" 
+         style="background-color: #000000;">
+        <div class="text-center text-white">
+            <h3>Aucune image à afficher</h3>
+            <p>Veuillez ajouter des images à ce diaporama</p>
+        </div>
+    </div>
 {% endif %}

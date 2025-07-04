@@ -1,41 +1,95 @@
 {% extends 'base.html.twig' %}
-{% block title %}Slideshow{% endblock %}
+{% block title %}{{ screen.name }}{% endblock %}
 {% block body %}
     <style>
-        body {
-            background: #000;
-            overflow: hidden;
-        }
-        
+        /* CSS minimal - uniquement ce qui n'existe pas dans Bootstrap */
         .slide {
-            transition: opacity 1s ease-in-out;
-            opacity: 0;
+            transition: opacity 2s ease-in-out, transform 2s ease-in-out;
+            will-change: opacity, transform;
         }
         
-        .slide.active {
-            opacity: 1;
+        .color-overlay {
+            transition: opacity 2s ease-in-out;
+            pointer-events: none;
         }
         
-        .slide img {
-            object-fit: contain;
+        /* Transition fluide pour le wrapper et body comme les images */
+        body, #slideshow-wrapper {
+            transition: background-color 2s ease-in-out;
         }
     </style>
 
-    <div class="position-fixed top-0 start-0 w-100 vh-100 d-flex align-items-center justify-content-center" id="slideshow-container">
-        {% if pictures is not empty %}
-            {% set sortedPictures = pictures|sort((a, b) => a.position <=> b.position) %}
-            {% for picture in sortedPictures %}
-                {% if picture.imageName %}
-                    <div class="slide position-absolute w-100 h-100 d-flex align-items-center justify-content-center" 
-                         data-delay="{{ picture.delay }}"
-                         data-bg-color="{{ picture.backgroundColor|default('#000') }}"
-                         data-position="{{ picture.position }}"
-                         style="background-color: {{ picture.backgroundColor|default('#000') }};">
-                        <img src="{{ asset('uploads/pictures/' ~ picture.imageName) }}" class="w-100 h-100" alt="">
+    <!-- Wrapper principal Bootstrap uniquement -->
+    <div class="position-fixed top-0 start-0 w-100 vh-100 overflow-hidden" id="slideshow-wrapper" style="background-color: #000000;">
+        
+        <!-- Overlay transition couleur -->
+        <div class="position-absolute top-0 start-0 w-100 h-100 opacity-0 color-overlay" id="color-overlay"></div>
+        
+        <!-- Container slides Bootstrap -->
+        <div class="position-relative w-100 h-100 d-flex align-items-center justify-content-center" id="slideshow-container">
+            {% if pictures is not empty %}
+                {% set sortedPictures = pictures|sort((a, b) => a.position <=> b.position) %}
+                {% for picture in sortedPictures %}
+                    {% if picture.imageName %}
+                        <div class="slide position-absolute w-100 h-100 d-flex align-items-center justify-content-center opacity-0" 
+                             data-delay="{{ picture.delay|default(5)|abs }}"
+                             data-bg-color="{{ picture.backgroundColor|default('#000000')|e('html_attr') }}"
+                             data-position="{{ picture.position|default(0)|abs }}"
+                             data-image-id="{{ picture.id }}">
+                            
+                            <img src="{{ asset('uploads/pictures/' ~ picture.imageName|e('url')) }}" 
+                                 class="img-fluid mw-100 mh-100 rounded shadow-lg"
+                                 style="max-height: 100vh; object-fit: contain;"
+                                 alt="{{ picture.name|default('Image du diaporama')|e('html_attr') }}"
+                                 loading="lazy"
+                                 onerror="this.parentElement.classList.add('d-none');">
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            {% else %}
+                <div class="position-absolute top-50 start-50 translate-middle text-center text-white">
+                    <div class="alert border-light text-white" style="background-color: transparent;" role="alert">
+                        <h3 class="h4 mb-3">Aucune image à afficher</h3>
+                        <p class="mb-0">Veuillez ajouter des images à ce diaporama</p>
                     </div>
-                {% endif %}
-            {% endfor %}
-        {% endif %}
+                </div>
+            {% endif %}
+        </div>
+        
+        <!-- Progress dots Bootstrap -->
+        <div class="position-fixed bottom-0 start-50 translate-middle-x mb-4">
+            <div class="d-flex gap-2" id="progress-dots"></div>
+        </div>
+        
+        <!-- Spinner Bootstrap -->
+        <div class="position-fixed top-50 start-50 translate-middle d-none" id="loading-spinner">
+            <div class="spinner-border text-light" style="width: 3rem; height: 3rem;" role="status">
+                <span class="visually-hidden">Chargement...</span>
+            </div>
+        </div>
+        
+        <!-- Toast container Bootstrap -->
+        <div class="toast-container position-fixed top-0 end-0 p-3"></div>
+        
+        <!-- Debug popup - Mode développement uniquement -->
+        <div class="position-fixed top-0 start-0 m-3 p-3 bg-dark text-white rounded shadow-lg" 
+             id="debug-panel" 
+             style="font-size: 12px; opacity: 0.8; z-index: 1000; display: none;">
+            <div class="mb-2"><strong>🐛 DEBUG MODE</strong></div>
+            <div><strong>Slide:</strong> <span id="debug-slide">-</span></div>
+            <div><strong>Total:</strong> <span id="debug-total">-</span></div>
+            <div><strong>Délai:</strong> <span id="debug-delay">-</span>s</div>
+            <div><strong>Couleur:</strong> <span id="debug-color">-</span></div>
+            <div><strong>État:</strong> <span id="debug-state">-</span></div>
+            <div><strong>Image ID:</strong> <span id="debug-image-id">-</span></div>
+            <div><strong>Prochaine:</strong> <span id="debug-next">-</span>s</div>
+            <hr class="my-2">
+            <div style="font-size: 10px;">
+                <div>Retry: <span id="debug-retry">0</span>/3</div>
+                <div>Actif: <span id="debug-active">true</span></div>
+                <div>Transition: <span id="debug-transition">false</span></div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -45,15 +99,77 @@
                 this.slides = [];
                 this.currentSlide = 0;
                 this.timeoutId = null;
+                this.isActive = true;
+                this.isTransitioning = false;
+                this.retryCount = 0;
+                this.maxRetries = 3;
+                this.nextSlideTime = 0;
+                
+                // Mode développement (détection via URL ou localStorage)
+                this.debugMode = window.location.search.includes('debug=1') || 
+                                localStorage.getItem('slideshow_debug') === '1';
+                
+                this.wrapper = document.getElementById('slideshow-wrapper');
+                this.colorOverlay = document.getElementById('color-overlay');
+                this.progressDots = document.getElementById('progress-dots');
+                this.loadingSpinner = document.getElementById('loading-spinner');
+                this.debugPanel = document.getElementById('debug-panel');
+                
                 this.init();
                 this.startPolling();
+                this.setupVisibilityHandling();
+                this.setupDebugMode();
+            }
+
+            setupDebugMode() {
+                if (this.debugMode && this.debugPanel) {
+                    this.debugPanel.style.display = 'block';
+                    this.updateDebugInfo();
+                    
+                    // Toggle debug avec Ctrl+D
+                    document.addEventListener('keydown', (e) => {
+                        if (e.ctrlKey && e.key === 'd') {
+                            e.preventDefault();
+                            this.toggleDebug();
+                        }
+                    });
+                }
+            }
+
+            toggleDebug() {
+                this.debugMode = !this.debugMode;
+                localStorage.setItem('slideshow_debug', this.debugMode ? '1' : '0');
+                this.debugPanel.style.display = this.debugMode ? 'block' : 'none';
+                if (this.debugMode) this.updateDebugInfo();
+            }
+
+            updateDebugInfo() {
+                if (!this.debugMode || !this.debugPanel) return;
+                
+                const currentSlideEl = this.slides[this.currentSlide];
+                const remainingTime = this.nextSlideTime > 0 ? Math.max(0, Math.ceil((this.nextSlideTime - Date.now()) / 1000)) : 0;
+                
+                document.getElementById('debug-slide').textContent = `${this.currentSlide + 1}`;
+                document.getElementById('debug-total').textContent = this.slides.length;
+                document.getElementById('debug-delay').textContent = currentSlideEl ? (currentSlideEl.dataset.delay || 5) : '-';
+                document.getElementById('debug-color').textContent = currentSlideEl ? (currentSlideEl.dataset.bgColor || '#000000') : '-';
+                document.getElementById('debug-state').textContent = this.isTransitioning ? 'Transition' : 'Affichage';
+                document.getElementById('debug-image-id').textContent = currentSlideEl ? (currentSlideEl.dataset.imageId || '-') : '-';
+                document.getElementById('debug-next').textContent = remainingTime;
+                document.getElementById('debug-retry').textContent = this.retryCount;
+                document.getElementById('debug-active').textContent = this.isActive;
+                document.getElementById('debug-transition').textContent = this.isTransitioning;
             }
 
             init() {
                 this.updateSlides();
+                this.createProgressDots();
+                
                 if (this.slides.length > 0) {
                     this.showSlide(0);
-                    this.scheduleNextSlide();
+                    this.scheduleNext();
+                } else {
+                    console.warn('Aucune slide trouvée');
                 }
             }
 
@@ -61,93 +177,242 @@
                 this.slides = document.querySelectorAll('.slide');
             }
 
-            showSlide(index) {
-                console.log(`Affichage de la slide ${index}`);
-                this.slides.forEach(slide => slide.classList.remove('active'));
-                if (this.slides[index]) {
-                    this.slides[index].classList.add('active');
-                    
-                    // Optionnel : changer aussi la couleur de fond du body
-                    const bgColor = this.slides[index].getAttribute('data-bg-color');
-                    if (bgColor) {
-                        document.body.style.backgroundColor = bgColor;
-                    }
-                    
-                    console.log(`Slide ${index} active, delay: ${this.slides[index].getAttribute('data-delay')}s`);
+            createProgressDots() {
+                this.progressDots.innerHTML = '';
+                for (let i = 0; i < this.slides.length; i++) {
+                    const dot = document.createElement('div');
+                    dot.className = i === 0 
+                        ? 'bg-white rounded-circle opacity-100' 
+                        : 'bg-white rounded-circle opacity-25';
+                    dot.style.cssText = 'width: 8px; height: 8px; transition: all 0.3s ease;';
+                    this.progressDots.appendChild(dot);
                 }
             }
 
-            scheduleNextSlide() {
+            updateProgressDots() {
+                [...this.progressDots.children].forEach((dot, i) => {
+                    dot.className = i === this.currentSlide 
+                        ? 'bg-white rounded-circle opacity-100' 
+                        : 'bg-white rounded-circle opacity-25';
+                    if (i === this.currentSlide) {
+                        dot.style.transform = 'scale(1.2)';
+                    } else {
+                        dot.style.transform = 'scale(1)';
+                    }
+                });
+            }
+
+            showSlide(index) {
+                if (index < 0 || index >= this.slides.length || this.isTransitioning) return;
+
+                this.isTransitioning = true;
+                console.log(`Affichage slide ${index}`);
+
+                // Récupérer la couleur de fond de la nouvelle slide
+                const newSlide = this.slides[index];
+                const bgColor = newSlide.dataset.bgColor || '#000000';
+                
+                console.log(`Couleur de fond pour slide ${index}: ${bgColor}`);
+
+                // Masquer toutes les slides avec la même transition que les couleurs
+                this.slides.forEach(slide => {
+                    slide.classList.remove('opacity-100');
+                    slide.classList.add('opacity-0');
+                });
+
+                // Changer les couleurs de fond AVEC la même transition CSS (2s ease-in-out)
+                // Pas besoin d'overlay, le CSS fait le travail !
+                this.wrapper.style.backgroundColor = bgColor;
+                document.body.style.backgroundColor = bgColor;
+
+                // Attendre que la transition de couleur commence (même timing que les images)
+                setTimeout(() => {
+                    // Afficher la nouvelle slide avec la même transition
+                    newSlide.classList.remove('opacity-0');
+                    newSlide.classList.add('opacity-100');
+                    this.updateProgressDots();
+                    
+                    // Mettre à jour le debug
+                    this.updateDebugInfo();
+                    
+                    // Finir la transition après le même délai que les images (2s)
+                    setTimeout(() => {
+                        this.isTransitioning = false;
+                        this.updateDebugInfo();
+                    }, 2000);
+                }, 300);
+            }
+
+            scheduleNext() {
                 if (this.slides.length === 0) return;
                 
-                const currentDelay = parseInt(this.slides[this.currentSlide].getAttribute('data-delay')) * 1000;
+                const delay = Math.max(1, Math.min(60, parseInt(this.slides[this.currentSlide].dataset.delay) || 5)) * 1000;
                 
                 this.timeoutId = setTimeout(() => {
-                    this.currentSlide = (this.currentSlide + 1) % this.slides.length;
-                    this.showSlide(this.currentSlide);
-                    this.scheduleNextSlide();
-                }, currentDelay);
+                    if (this.isActive && !this.isTransitioning) {
+                        this.currentSlide = (this.currentSlide + 1) % this.slides.length;
+                        this.showSlide(this.currentSlide);
+                        this.scheduleNext();
+                    }
+                }, delay);
             }
 
             restart() {
-                // Arrêter le slideshow actuel
+                this.showSpinner();
+                
                 if (this.timeoutId) {
                     clearTimeout(this.timeoutId);
                     this.timeoutId = null;
                 }
                 
-                // Réinitialiser
+                this.isTransitioning = false;
                 this.currentSlide = 0;
                 this.updateSlides();
+                this.createProgressDots();
                 
-                if (this.slides.length > 0) {
-                    this.showSlide(0);
-                    this.scheduleNextSlide();
-                }
+                setTimeout(() => {
+                    if (this.slides.length > 0) {
+                        this.showSlide(0);
+                        this.scheduleNext();
+                    }
+                    this.hideSpinner();
+                }, 500);
             }
 
-            // Polling pour vérifier les nouvelles images
+            showSpinner() {
+                this.loadingSpinner?.classList.remove('d-none');
+            }
+
+            hideSpinner() {
+                this.loadingSpinner?.classList.add('d-none');
+            }
+
+            showToast(message, type = 'info') {
+                const colors = {
+                    success: 'text-bg-success',
+                    danger: 'text-bg-danger', 
+                    warning: 'text-bg-warning',
+                    info: 'text-bg-info'
+                };
+                
+                const toast = document.createElement('div');
+                toast.className = `toast ${colors[type] || colors.info}`;
+                toast.setAttribute('role', 'alert');
+                toast.innerHTML = `
+                    <div class="toast-body">
+                        ${message}
+                        <button type="button" class="btn-close btn-close-white float-end" data-bs-dismiss="toast"></button>
+                    </div>
+                `;
+                
+                document.querySelector('.toast-container').appendChild(toast);
+                
+                const bsToast = new bootstrap.Toast(toast, { autohide: true, delay: 3000 });
+                bsToast.show();
+                
+                toast.addEventListener('hidden.bs.toast', () => toast.remove());
+            }
+
+            setupVisibilityHandling() {
+                document.addEventListener('visibilitychange', () => {
+                    if (document.hidden) {
+                        this.isActive = false;
+                        if (this.timeoutId) {
+                            clearTimeout(this.timeoutId);
+                            this.timeoutId = null;
+                        }
+                    } else {
+                        this.isActive = true;
+                        if (!this.isTransitioning) {
+                            this.scheduleNext();
+                        }
+                    }
+                });
+            }
+
             async startPolling() {
                 setInterval(async () => {
+                    if (!this.isActive) return;
+
                     try {
-                        console.log('Vérification des mises à jour...');
-                        const response = await fetch(`/screen/${this.screenId}/check-updates`);
-                        const data = await response.json();
+                        const response = await fetch(`/screen/${this.screenId}/check-updates`, {
+                            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                        });
                         
-                        console.log('Réponse:', data);
-                        
-                        if (data.hasUpdates) {
-                            console.log('Mises à jour détectées, rechargement des slides...');
-                            await this.loadNewSlides();
+                        if (response.ok) {
+                            const data = await response.json();
+                            if (data.hasUpdates) {
+                                await this.loadNewSlides();
+                            }
+                            this.retryCount = 0;
                         }
                     } catch (error) {
-                        console.error('Erreur lors de la vérification des mises à jour:', error);
+                        console.error('Erreur polling:', error);
+                        if (++this.retryCount >= this.maxRetries) {
+                            this.showToast('Connexion interrompue', 'danger');
+                        }
                     }
-                }, 5000); // Vérifier toutes les 5 secondes
+                }, 5000);
             }
 
             async loadNewSlides() {
                 try {
-                    console.log('Chargement des nouvelles slides...');
-                    const response = await fetch(`/screen/${this.screenId}/get-slides`);
-                    const html = await response.text();
+                    this.showSpinner();
                     
-                    // Remplacer le contenu du container
-                    document.getElementById('slideshow-container').innerHTML = html;
+                    const response = await fetch(`/screen/${this.screenId}/get-slides`, {
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                    });
                     
-                    console.log('Nouvelles slides chargées, redémarrage...');
-                    // Redémarrer le slideshow
-                    this.restart();
+                    if (response.ok) {
+                        const html = await response.text();
+                        
+                        // Remplacer le contenu
+                        document.getElementById('slideshow-container').innerHTML = html;
+                        
+                        // CORRIGER le styling des nouvelles images
+                        this.fixImageStyling();
+                        
+                        this.restart();
+                        this.showToast('Diaporama mis à jour', 'success');
+                    }
                 } catch (error) {
-                    console.error('Erreur lors du chargement des nouvelles slides:', error);
+                    console.error('Erreur chargement:', error);
+                    this.showToast('Erreur de chargement', 'danger');
+                    this.hideSpinner();
                 }
+            }
+
+            // Nouvelle méthode pour corriger le styling des images
+            fixImageStyling() {
+                const images = document.querySelectorAll('.slide img');
+                images.forEach(img => {
+                    // S'assurer que les bonnes classes Bootstrap sont appliquées
+                    img.className = 'img-fluid mw-100 mh-100 rounded shadow-lg';
+                    
+                    // S'assurer que les styles CSS sont appliqués
+                    img.style.cssText = 'max-height: 100vh; object-fit: contain;';
+                    
+                    // Corriger le gestionnaire d'erreur
+                    img.onerror = function() {
+                        this.parentElement.classList.add('d-none');
+                    };
+                });
+                
+                // S'assurer que les slides ont les bonnes classes
+                const slides = document.querySelectorAll('.slide');
+                slides.forEach(slide => {
+                    slide.className = 'slide position-absolute w-100 h-100 d-flex align-items-center justify-content-center opacity-0';
+                });
+                
+                console.log(`Styling corrigé pour ${images.length} images et ${slides.length} slides`);
             }
         }
 
-        document.addEventListener('DOMContentLoaded', function() {
-            // Récupérer l'ID du screen depuis l'URL ou une variable
+        document.addEventListener('DOMContentLoaded', () => {
             const screenId = {{ screen.id }};
-            new Slideshow(screenId);
+            if (screenId) {
+                new Slideshow(screenId);
+            }
         });
     </script>
 {% endblock %}
